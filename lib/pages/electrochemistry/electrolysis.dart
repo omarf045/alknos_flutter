@@ -8,30 +8,33 @@ class ElectrolysisPage extends StatefulWidget {
 }
 
 class _ElectrolysisPageState extends State<ElectrolysisPage> {
-  String selectedMetal = 'Cu';
   String selectedMassUnit = 'g';
   String selectedTimeUnit = 'seg';
+  late String selectedCompound;
   TextEditingController massController = TextEditingController();
   TextEditingController currentController = TextEditingController();
   TextEditingController timeController = TextEditingController();
+  TextEditingController compoundController = TextEditingController();
   Map<String, dynamic> result = {};
 
-  final List<String> metalOptions = ['Cu', 'Al', 'Ag'];
   final List<String> massUnitOptions = ['g', 'kg', 'lb', 'oz', 'mg', 'ton'];
   final List<String> timeUnitOptions = ['seg', 'min', 'hrs'];
 
   bool isTimeFilled = false;
   bool isCurrentFilled = false;
   bool isMassFilled = false;
+  bool isCompoundFilled = false;
   late bool showMassInput;
   late bool showCurrentInput;
   late bool showTimeInput;
+  late bool showCompoundInput;
 
   @override
   Widget build(BuildContext context) {
     showMassInput = !(isTimeFilled && isCurrentFilled);
     showCurrentInput = !(isTimeFilled && isMassFilled);
     showTimeInput = !(isCurrentFilled && isMassFilled);
+    showCompoundInput = !(isTimeFilled && isMassFilled && isCurrentFilled);
 
     return Scaffold(
       appBar: AppBar(
@@ -44,22 +47,18 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Select metal:',
+                'Enter compound:',
                 style: TextStyle(fontSize: 18.0),
               ),
-              DropdownButton<String>(
-                value: selectedMetal,
+              TextField(
+                controller: compoundController,
                 onChanged: (value) {
                   setState(() {
-                    selectedMetal = value!;
+                    selectedCompound = value;
+                    isCompoundFilled = value.isNotEmpty;
                   });
                 },
-                items: metalOptions.map((metal) {
-                  return DropdownMenuItem<String>(
-                    value: metal,
-                    child: Text(metal),
-                  );
-                }).toList(),
+                enabled: showCompoundInput,
               ),
               const SizedBox(height: 16.0),
               Row(
@@ -214,7 +213,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
                         TableCell(
                           child: Center(
                             child: Text(
-                              'Element',
+                              'Compound',
                               style: TextStyle(fontSize: 18.0),
                             ),
                           ),
@@ -249,7 +248,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
                       children: [
                         TableCell(
                           child: Center(
-                            child: Text(result['element']),
+                            child: Text(selectedCompound),
                           ),
                         ),
                         TableCell(
@@ -297,7 +296,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
 
       setState(() {
         result = {
-          'element': selectedMetal,
+          'compound': selectedCompound,
           'seconds': seconds,
           'amps': current,
           'grams': grams,

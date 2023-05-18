@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
@@ -86,7 +84,6 @@ class _StoichiometryPageState extends State<StoichiometryPage> {
 
   // Función para balancear la ecuación química
   void _balanceEquation() {
-    // TODO: Implementar la función de balanceo de ecuaciones químicas
     _fetchBalancedFormula().then((value) {
       setState(() {
         balancedFormula = value;

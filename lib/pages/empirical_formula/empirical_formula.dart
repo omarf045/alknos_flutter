@@ -1,35 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 class EmpiricalFormulaPage extends StatefulWidget {
-  const EmpiricalFormulaPage({super.key});
+  const EmpiricalFormulaPage({Key? key});
 
   @override
   _EmpiricalFormulaPageState createState() => _EmpiricalFormulaPageState();
 }
 
 class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
-  // Variables para los elementos y porcentajes ingresados
-  List<String> elementos = [];
-  List<double> porcentajes = [];
+  // Variables for entered elements and percentages
+  List<String> elements = [];
+  List<double> percentages = [];
 
-  // Controladores de los campos de entrada
-  final TextEditingController _porcentajeController = TextEditingController();
+  // Controllers for input fields
+  final TextEditingController _percentageController = TextEditingController();
 
-  // Lista de elementos disponibles
-  List<String> elementosDisponibles = ['C', 'H', 'O', 'N', 'P', 'S'];
+  // List of available elements
+  List<String> originalAvailableElements = ['C', 'H', 'O', 'N', 'P', 'S'];
+  List<String> availableElements = ['C', 'H', 'O', 'N', 'P', 'S'];
 
-  // Elemento actualmente seleccionado
-  String? elementoSeleccionado;
+  // Currently selected element
+  String? selectedElement;
 
-  // Función para agregar el elemento y el porcentaje a las listas
-  void _agregarElemento() {
-    if (elementoSeleccionado != null && _porcentajeController.text.isNotEmpty) {
+  // Calculated empirical formula
+  String? empiricalFormula;
+
+  Future<String> _fetchEmpiricalFormula() async {
+    List<Map<String, dynamic>> elementsList = [];
+    for (int i = 0; i < elements.length; i++) {
+      Map<String, dynamic> elementMap = {};
+      elementMap['symbol'] = elements[i];
+      elementMap['percentage'] = percentages[i];
+      elementsList.add(elementMap);
+    }
+
+    Map<String, dynamic> data = {'elements': elementsList};
+
+    String url = 'http://192.168.0.25:5050/api/v1.0/empirical-formula';
+
+    final response = await Dio().post(url, data: data);
+
+    return response.data['empirical_formula'];
+  }
+
+  // Function to add element and percentage to lists
+  void _addElement() {
+    if (selectedElement != null && _percentageController.text.isNotEmpty) {
       setState(() {
-        elementos.add(elementoSeleccionado!);
-        porcentajes.add(double.parse(_porcentajeController.text));
-        _porcentajeController.clear();
-        elementosDisponibles.remove(elementoSeleccionado);
-        elementoSeleccionado = null;
+        elements.add(selectedElement!);
+        percentages.add(double.parse(_percentageController.text));
+        _percentageController.clear();
+        availableElements.remove(selectedElement);
+        selectedElement = null;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -40,41 +63,42 @@ class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
     }
   }
 
-  // Función para borrar un elemento de las listas
-  void _borrarElemento(int index) {
+  // Function to delete an element from the lists
+  void _deleteElement(int index) {
     setState(() {
-      elementosDisponibles.add(elementos[index]);
-      elementos.removeAt(index);
-      porcentajes.removeAt(index);
+      availableElements.add(elements[index]);
+      elements.removeAt(index);
+      percentages.removeAt(index);
     });
   }
 
-  // Función para calcular la fórmula empírica
-  String _calcularFormulaEmpirica() {
-    // Cálculo de la suma de los porcentajes
-    double sumaPorcentajes = porcentajes.fold(0, (a, b) => a + b);
+  // Function to calculate the empirical formula
+  void _calculateEmpiricalFormula() {
+    // Calculation of the sum of percentages
+    double sumPercentages = percentages.fold(0, (a, b) => a + b);
 
-    if (sumaPorcentajes == 100) {
-      // Cálculo de la fórmula empírica
-      String formulaEmpirica = "";
-      for (int i = 0; i < elementos.length; i++) {
-        int subindice = (porcentajes[i] / sumaPorcentajes * 100).round();
-        formulaEmpirica += elementos[i] + subindice.toString();
-      }
-      return formulaEmpirica;
+    if (sumPercentages == 100) {
+      // Calculation of empirical formula
+      _fetchEmpiricalFormula().then((value) {
+        setState(() {
+          empiricalFormula = value;
+          availableElements = List.from(originalAvailableElements);
+          elements.clear();
+          percentages.clear();
+        });
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill the fields with valid data'),
         ),
       );
-      return "";
     }
   }
 
   @override
   void dispose() {
-    _porcentajeController.dispose();
+    _percentageController.dispose();
     super.dispose();
   }
 
@@ -82,22 +106,22 @@ class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cálculo de fórmula empírica'),
+        title: const Text('Empirical formula calculation'),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Sección de entrada de datos
+            // Input data section
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Elemento'),
+                  const Text('Element'),
                   DropdownButton<String>(
-                    value: elementoSeleccionado,
-                    items: elementosDisponibles.map((String value) {
+                    value: selectedElement,
+                    items: availableElements.map((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),
@@ -105,37 +129,37 @@ class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
                     }).toList(),
                     onChanged: (selected) {
                       setState(() {
-                        elementoSeleccionado = selected;
+                        selectedElement = selected;
                       });
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text('Porcentaje'),
+                  const Text('Percentage'),
                   TextField(
-                    controller: _porcentajeController,
+                    controller: _percentageController,
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: _agregarElemento,
-                    child: const Text('Agregar elemento'),
+                    onPressed: _addElement,
+                    child: const Text('Add element'),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Elementos y porcentajes ingresados:'),
+                  const Text('Entered elements and percentages:'),
                   const SizedBox(height: 8),
                   ListView.builder(
                     shrinkWrap: true,
-                    itemCount: elementos.length,
+                    itemCount: elements.length,
                     itemBuilder: (context, index) {
                       return Row(
                         children: [
                           Expanded(
                             child: Text(
-                              '${elementos[index]} ${porcentajes[index]}%',
+                              '${elements[index]} ${percentages[index]}%',
                             ),
                           ),
                           IconButton(
-                            onPressed: () => _borrarElemento(index),
+                            onPressed: () => _deleteElement(index),
                             icon: const Icon(Icons.delete),
                           ),
                         ],
@@ -145,37 +169,21 @@ class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
                 ],
               ),
             ),
-            // Sección de cálculo
+            // Calculation section
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ElevatedButton(
-                    onPressed: elementos.isEmpty
-                        ? null
-                        : () {
-                            String formulaEmpirica = _calcularFormulaEmpirica();
-                            if (formulaEmpirica.isNotEmpty) {
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text('Fórmula empírica'),
-                                    content: Text(formulaEmpirica),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Cerrar'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
-                          },
-                    child: const Text('Calcular fórmula empírica'),
+                    onPressed:
+                        elements.isEmpty ? null : _calculateEmpiricalFormula,
+                    child: const Text('Calculate empirical formula'),
                   ),
+                  if (empiricalFormula != null) ...[
+                    const SizedBox(height: 16),
+                    Text('Empirical formula: $empiricalFormula'),
+                  ],
                 ],
               ),
             ),
