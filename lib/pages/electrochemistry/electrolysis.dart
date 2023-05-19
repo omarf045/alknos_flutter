@@ -37,7 +37,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
   late bool showCompoundInput;
 
   Future<Map<String, dynamic>> _fetchElectrolysisData() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/calculate-electrolysis';
+    String url = 'http://192.168.0.25:8000/api/v1.0/calculate-electrolysis';
 
     double mass = double.tryParse(massController.text) ?? 0;
     double current = double.tryParse(currentController.text) ?? 0;

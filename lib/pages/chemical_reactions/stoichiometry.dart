@@ -106,7 +106,7 @@ class _StoichiometryPageState extends State<StoichiometryPage> {
       position = compounds.indexOf(compoundSelected!) + 1;
     }
 
-    String url = 'http://192.168.0.25:5050/api/v1.0/calculate-stoichiometry';
+    String url = 'http://192.168.0.25:8000/api/v1.0/calculate-stoichiometry';
     Map<String, dynamic> data = {
       'reaction': reaction,
       'unit': massUnitSelected,
@@ -127,7 +127,7 @@ class _StoichiometryPageState extends State<StoichiometryPage> {
     // Agregar variable reaction
     String reaction = '${reactants.join(' + ')} --> ${products.join(' + ')}';
 
-    String url = 'http://192.168.0.25:5050/api/v1.0/balance-reaction';
+    String url = 'http://192.168.0.25:8000/api/v1.0/balance-reaction';
     Map<String, dynamic> data = {'reaction': reaction};
 
     final response = await Dio().post(url, data: data);

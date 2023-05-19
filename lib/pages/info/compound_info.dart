@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
 class CompoundInformationPage extends StatefulWidget {
-  const CompoundInformationPage({super.key});
+  final int cid; // <-- Add the variable here
+
+  const CompoundInformationPage({Key? key, required this.cid})
+      : super(key: key);
 
   @override
   _CompoundInformationPageState createState() =>
@@ -16,7 +19,7 @@ class _CompoundInformationPageState extends State<CompoundInformationPage> {
   void initState() {
     super.initState();
 
-    _getCompoundInformation(962).then((value) {
+    _getCompoundInformation(widget.cid).then((value) {
       setState(() {
         compoundData = value;
       });
@@ -24,7 +27,7 @@ class _CompoundInformationPageState extends State<CompoundInformationPage> {
   }
 
   Future<List<dynamic>> _getCompoundInformation(int cid) async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/compound-information';
+    String url = 'http://192.168.0.25:8000/api/v1.0/compound-information';
     Map<String, dynamic> data = {'cid': cid};
     List<dynamic> responseData = [];
 

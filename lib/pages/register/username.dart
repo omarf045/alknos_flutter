@@ -63,7 +63,7 @@ class _UsernamePageState extends State<UsernamePage> {
   }
 
   Future<bool> _checkIfUsernameExists() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/user-exists';
+    String url = 'http://192.168.0.25:8000/api/v1.0/user-exists';
     Map<String, dynamic> data = {'username': _controller.text};
 
     final response = await Dio().get(url, data: data);

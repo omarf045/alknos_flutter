@@ -41,7 +41,7 @@ class _EmpiricalFormulaPageState extends State<EmpiricalFormulaPage> {
     }
 
     Map<String, dynamic> data = {'elements': elementsList};
-    String url = 'http://192.168.0.25:5050/api/v1.0/empirical-formula';
+    String url = 'http://192.168.0.25:8000/api/v1.0/empirical-formula';
 
     final response = await Dio().post(url, data: data);
     return response.data['empirical_formula'];

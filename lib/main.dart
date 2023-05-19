@@ -36,7 +36,6 @@ void main() async {
       '/galvanic-cell': (context) => const GalvanicCellPage(),
       '/empirical-formula': (context) => const EmpiricalFormulaPage(),
       '/compound-query': (context) => const CompoundQueryPage(),
-      '/compound-information': (context) => const CompoundInformationPage(),
       '/electromagnetic-waves': (context) => const ElectromagneticWavePage(),
     },
   ));

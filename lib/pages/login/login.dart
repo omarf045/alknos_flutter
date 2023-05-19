@@ -49,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<String?> _fetchAuthToken() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/login';
+    String url = 'http://192.168.0.25:8000/api/v1.0/login';
     Map<String, dynamic> data = {
       'username': _usernameController.text,
       'password': _passwordController.text
@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<String?> _fetchUsername() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/get-details';
+    String url = 'http://192.168.0.25:8000/api/v1.0/get-details';
     Options options = Options(headers: {'Authorization': 'Token $token'});
 
     try {

@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
 import '../../widgets/drawer_widget.dart';
+import 'compound_info.dart';
 
 class CompoundQueryPage extends StatefulWidget {
   const CompoundQueryPage({Key? key}) : super(key: key);
@@ -28,7 +29,7 @@ class _CompoundQueryPageState extends State<CompoundQueryPage> {
   }
 
   Future<List<dynamic>> _getCompounds(String query) async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/compound-query';
+    String url = 'http://192.168.0.25:8000/api/v1.0/compound-query';
     Map<String, dynamic> data = {'query': query};
     List<dynamic> responseData = [];
 
@@ -144,6 +145,7 @@ class _CompoundQueryPageState extends State<CompoundQueryPage> {
                             setState(() {
                               selectedTool = index;
                             });
+                            _handleCardTap(index);
                           },
                           child: FadeInUp(
                             delay: const Duration(milliseconds: 100),
@@ -239,5 +241,14 @@ class _CompoundQueryPageState extends State<CompoundQueryPage> {
 
   void _handleMenuButtonPressed() {
     _advancedDrawerController.showDrawer();
+  }
+
+  void _handleCardTap(int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CompoundInformationPage(cid: compounds[index]['cid']),
+      ),
+    );
   }
 }

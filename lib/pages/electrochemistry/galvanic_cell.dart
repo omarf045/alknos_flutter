@@ -22,7 +22,7 @@ class _GalvanicCellPageState extends State<GalvanicCellPage> {
   String? _imageBase64;
 
   Future<String?> _getImageBase64() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/galvanic-cell';
+    String url = 'http://192.168.0.25:8000/api/v1.0/galvanic-cell';
     Map<String, dynamic> data = {
       'electrode1': _selectedElectrode1,
       'electrode2': _selectedElectrode2
