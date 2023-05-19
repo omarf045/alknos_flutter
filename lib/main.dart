@@ -14,21 +14,36 @@ import 'pages/info/compound_query.dart';
 import 'pages/empirical_formula/empirical_formula.dart';
 import 'package:alknos_v1/pages/quantum_mechanics/electromagnetic_wave.dart';
 
-void main() => runApp(MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/stoichiometry',
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/email': (context) => const EmailPage(),
-        '/username': (context) => const UsernamePage(),
-        '/password': (context) => const PasswordPage(),
-        '/stoichiometry': (context) => const StoichiometryPage(),
-        '/limiting-reagent': (context) => const LimitingReagentPage(),
-        '/electrolysis': (context) => const ElectrolysisPage(),
-        '/galvanic-cell': (context) => const GalvanicCellPage(),
-        '/empirical-formula': (context) => const EmpiricalFormulaPage(),
-        '/compound-query': (context) => const CompoundQueryPage(),
-        '/compound-information': (context) => const CompoundInformationPage(),
-        '/electromagnetic-waves': (context) => const ElectromagneticWavePage(),
-      },
-    ));
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Llamada a la función obtenerToken
+  String? token = await getToken();
+
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    initialRoute: token != null ? '/stoichiometry' : '/login',
+    routes: {
+      '/login': (context) => const LoginPage(),
+      '/email': (context) => const EmailPage(),
+      '/username': (context) => const UsernamePage(),
+      '/password': (context) => const PasswordPage(),
+      '/stoichiometry': (context) => const StoichiometryPage(),
+      '/limiting-reagent': (context) => const LimitingReagentPage(),
+      '/electrolysis': (context) => const ElectrolysisPage(),
+      '/galvanic-cell': (context) => const GalvanicCellPage(),
+      '/empirical-formula': (context) => const EmpiricalFormulaPage(),
+      '/compound-query': (context) => const CompoundQueryPage(),
+      '/compound-information': (context) => const CompoundInformationPage(),
+      '/electromagnetic-waves': (context) => const ElectromagneticWavePage(),
+    },
+  ));
+}
+
+Future<String?> getToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('token');
+  return token;
+}

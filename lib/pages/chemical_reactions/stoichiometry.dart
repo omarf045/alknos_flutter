@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_advanced_drawer/flutter_advanced_drawer.dart';
+import '../../widgets/drawer_widget.dart';
+import 'package:iconsax/iconsax.dart';
 
 class StoichiometryPage extends StatefulWidget {
   const StoichiometryPage({Key? key}) : super(key: key);
@@ -9,6 +12,8 @@ class StoichiometryPage extends StatefulWidget {
 }
 
 class _StoichiometryPageState extends State<StoichiometryPage> {
+  final _advancedDrawerController = AdvancedDrawerController();
+
   // Variables para los compuestos reactantes y productos
   List<String> reactants = [];
   List<String> products = [];
@@ -161,260 +166,326 @@ class _StoichiometryPageState extends State<StoichiometryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Stoichiometry Calculator'),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Sección de compuestos reactantes
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Reactants'),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _reactantController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter a compound',
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: AdvancedDrawer(
+        backdropColor: Colors.grey.shade900,
+        controller: _advancedDrawerController,
+        animationCurve: Curves.easeInOut,
+        animationDuration: const Duration(milliseconds: 300),
+        animateChildDecoration: true,
+        rtlOpening: false,
+        disabledGestures: false,
+        childDecoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade900,
+              blurRadius: 20.0,
+              spreadRadius: 5.0,
+              offset: const Offset(-20.0, 0.0),
+            ),
+          ],
+          borderRadius: BorderRadius.circular(30),
+        ),
+        drawer: DrawerWidget(controller: _advancedDrawerController),
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            toolbarHeight: 80,
+            leading: IconButton(
+              color: Colors.black,
+              onPressed: _handleMenuButtonPressed,
+              icon: ValueListenableBuilder<AdvancedDrawerValue>(
+                valueListenable: _advancedDrawerController,
+                builder: (_, value, __) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: Icon(
+                      value.visible ? Iconsax.close_square : Iconsax.menu,
+                      key: ValueKey<bool>(value.visible),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _addReactant,
-                    child: const Text('Add reactant'),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Compounds added:'),
-                  const SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: reactants.length,
-                    itemBuilder: (context, index) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reactants[index],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => _deleteReactant(index),
-                            icon: const Icon(Icons.delete),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-            // Sección de compuestos productos
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Products'),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _productController,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter a compound',
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _addProduct,
-                    child: const Text('Add product'),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Compounds added:'),
-                  const SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              products[index],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => _deleteProduct(index),
-                            icon: const Icon(Icons.delete),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            // Sección de balanceo de ecuación química
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ElevatedButton(
-                    onPressed:
-                        balancedFormula == null ? _balanceEquation : null,
-                    child: const Text('Balance equation'),
-                  ),
-                  if (balancedFormula != null)
-                    const SizedBox(height: 16)
-                  else
-                    const SizedBox.shrink(),
-                  if (balancedFormula != null)
-                    Text(
-                      'Balanced equation: $balancedFormula',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                ],
-              ),
-            ),
-            // Sección de cálculo de estequiometría
-            if (balancedFormula != null) ...[
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Stoichiometry'),
-                    const SizedBox(height: 8),
-                    DropdownButton<String>(
-                      value: compoundSelected,
-                      items: [...reactants, ...products].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (selected) {
-                        setState(() {
-                          compoundSelected = selected;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButton<String>(
-                      value: massUnitSelected,
-                      items: massUnits.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (selected) {
-                        setState(() {
-                          massUnitSelected = selected;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        hintText: 'Enter a quantity',
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          quantitySelected = double.tryParse(value);
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _calculateStoichiometry,
-                      child: const Text('Calculate'),
-                    ),
-                    const SizedBox(height: 16),
-                    if (stoichiometryResults.isNotEmpty)
-                      Table(
-                        border: TableBorder.all(),
-                        children: [
-                          TableRow(
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                            ),
-                            children: const [
-                              TableCell(
-                                child: Center(
-                                  child: Text(
-                                    'Compound',
-                                    style: TextStyle(fontSize: 16.0),
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Center(
-                                  child: Text(
-                                    'Moles',
-                                    style: TextStyle(fontSize: 16.0),
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Center(
-                                  child: Text(
-                                    'Molecules',
-                                    style: TextStyle(fontSize: 16.0),
-                                  ),
-                                ),
-                              ),
-                              TableCell(
-                                child: Center(
-                                  child: Text(
-                                    'Grams',
-                                    style: TextStyle(fontSize: 16.0),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          ...stoichiometryResults.map((result) {
-                            return TableRow(
-                              children: [
-                                TableCell(
-                                  child: Text(
-                                    result['compound'],
-                                  ),
-                                ),
-                                TableCell(
-                                  child: Text(
-                                    '${result['moles']}',
-                                  ),
-                                ),
-                                TableCell(
-                                  child: Text(
-                                    '${result['molecules']}',
-                                  ),
-                                ),
-                                TableCell(
-                                  child: Text(
-                                    '${result['grams']}',
-                                  ),
-                                ),
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                  ],
+            actions: [
+              IconButton(
+                  iconSize: 25,
+                  onPressed: () {},
+                  icon: Icon(
+                    Icons.search,
+                    color: Colors.grey.shade700,
+                  ))
+            ],
+            title: const Center(
+              child: Text(
+                'Stoichiometry',
+                style: TextStyle(
+                  color: Colors.black87,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ],
+            ),
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Sección de compuestos reactantes
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Reactants'),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _reactantController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter a compound',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _addReactant,
+                        child: const Text('Add reactant'),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Compounds added:'),
+                      const SizedBox(height: 8),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: reactants.length,
+                        itemBuilder: (context, index) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  reactants[index],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => _deleteReactant(index),
+                                icon: const Icon(Icons.delete),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Sección de compuestos productos
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Products'),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _productController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter a compound',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _addProduct,
+                        child: const Text('Add product'),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Compounds added:'),
+                      const SizedBox(height: 8),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  products[index],
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () => _deleteProduct(index),
+                                icon: const Icon(Icons.delete),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                // Sección de balanceo de ecuación química
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton(
+                        onPressed:
+                            balancedFormula == null ? _balanceEquation : null,
+                        child: const Text('Balance equation'),
+                      ),
+                      if (balancedFormula != null)
+                        const SizedBox(height: 16)
+                      else
+                        const SizedBox.shrink(),
+                      if (balancedFormula != null)
+                        Text(
+                          'Balanced equation: $balancedFormula',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                    ],
+                  ),
+                ),
+                // Sección de cálculo de estequiometría
+                if (balancedFormula != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Stoichiometry'),
+                        const SizedBox(height: 8),
+                        DropdownButton<String>(
+                          value: compoundSelected,
+                          items:
+                              [...reactants, ...products].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (selected) {
+                            setState(() {
+                              compoundSelected = selected;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButton<String>(
+                          value: massUnitSelected,
+                          items: massUnits.map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (selected) {
+                            setState(() {
+                              massUnitSelected = selected;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _quantityController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter a quantity',
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              quantitySelected = double.tryParse(value);
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _calculateStoichiometry,
+                          child: const Text('Calculate'),
+                        ),
+                        const SizedBox(height: 16),
+                        if (stoichiometryResults.isNotEmpty)
+                          Table(
+                            border: TableBorder.all(),
+                            children: [
+                              TableRow(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[300],
+                                ),
+                                children: const [
+                                  TableCell(
+                                    child: Center(
+                                      child: Text(
+                                        'Compound',
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
+                                    ),
+                                  ),
+                                  TableCell(
+                                    child: Center(
+                                      child: Text(
+                                        'Moles',
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
+                                    ),
+                                  ),
+                                  TableCell(
+                                    child: Center(
+                                      child: Text(
+                                        'Molecules',
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
+                                    ),
+                                  ),
+                                  TableCell(
+                                    child: Center(
+                                      child: Text(
+                                        'Grams',
+                                        style: TextStyle(fontSize: 16.0),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              ...stoichiometryResults.map((result) {
+                                return TableRow(
+                                  children: [
+                                    TableCell(
+                                      child: Text(
+                                        result['compound'],
+                                      ),
+                                    ),
+                                    TableCell(
+                                      child: Text(
+                                        '${result['moles']}',
+                                      ),
+                                    ),
+                                    TableCell(
+                                      child: Text(
+                                        '${result['molecules']}',
+                                      ),
+                                    ),
+                                    TableCell(
+                                      child: Text(
+                                        '${result['grams']}',
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  void _handleMenuButtonPressed() {
+    _advancedDrawerController.showDrawer();
   }
 }

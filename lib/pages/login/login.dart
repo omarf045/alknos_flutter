@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:alknos_v1/pages/chemical_reactions/stoichiometry.dart';
 import 'package:alknos_v1/pages/register/email.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(const MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -18,19 +21,57 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   int activeIndex = 0;
+  late String token;
 
   @override
   void initState() {
     Timer.periodic(const Duration(seconds: 5), (timer) {
       setState(() {
         activeIndex++;
-
         if (activeIndex == 4) activeIndex = 0;
       });
     });
 
     super.initState();
+  }
+
+  Future<void> saveToken(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('token', token);
+  }
+
+  Future<void> saveUsername(String username) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('username', username);
+  }
+
+  Future<String?> _fetchAuthToken() async {
+    String url = 'http://192.168.0.25:5050/api/v1.0/login';
+    Map<String, dynamic> data = {
+      'username': _usernameController.text,
+      'password': _passwordController.text
+    };
+    try {
+      final response = await Dio().post(url, data: data);
+      return response.data['token'] as String?;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  Future<String?> _fetchUsername() async {
+    String url = 'http://192.168.0.25:5050/api/v1.0/get-details';
+    Options options = Options(headers: {'Authorization': 'Token $token'});
+
+    try {
+      final response = await Dio().get(url, options: options);
+      return response.data['username'] as String?;
+    } catch (error) {
+      return null;
+    }
   }
 
   @override
@@ -118,6 +159,7 @@ class _LoginPageState extends State<LoginPage> {
               height: 40,
             ),
             TextField(
+              controller: _usernameController,
               cursorColor: Colors.black,
               decoration: InputDecoration(
                 labelText: 'Usuario',
@@ -155,6 +197,8 @@ class _LoginPageState extends State<LoginPage> {
               height: 20,
             ),
             TextField(
+              obscureText: true,
+              controller: _passwordController,
               cursorColor: Colors.black,
               decoration: InputDecoration(
                 labelText: 'Contraseña',
@@ -208,7 +252,30 @@ class _LoginPageState extends State<LoginPage> {
               height: 30,
             ),
             MaterialButton(
-              onPressed: () {},
+              onPressed: () {
+                _fetchAuthToken().then((value) {
+                  if (value == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cannot login with provided credentials'),
+                      ),
+                    );
+                  } else {
+                    saveToken(value);
+                    setState(() {
+                      token = value;
+                    });
+                    _fetchUsername().then((value) {
+                      saveUsername(value as String);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const StoichiometryPage()),
+                      );
+                    });
+                  }
+                });
+              },
               height: 48,
               color: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 50),
