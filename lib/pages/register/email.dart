@@ -31,7 +31,7 @@ class _EmailPageState extends State<EmailPage> {
   }
 
   Future<bool> _checkIfEmailExists() async {
-    String url = 'http://192.168.0.25:5050/api/v1.0/get-details';
+    String url = 'http://192.168.0.25:5050/api/v1.0/user-exists';
     Map<String, dynamic> data = {'email': _controller.text};
 
     final response = await Dio().get(url, data: data);

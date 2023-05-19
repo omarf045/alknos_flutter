@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 class ElectrolysisPage extends StatefulWidget {
   const ElectrolysisPage({super.key});
@@ -15,6 +16,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
   TextEditingController currentController = TextEditingController();
   TextEditingController timeController = TextEditingController();
   TextEditingController compoundController = TextEditingController();
+
   Map<String, dynamic> result = {};
 
   final List<String> massUnitOptions = ['g', 'kg', 'lb', 'oz', 'mg', 'ton'];
@@ -28,6 +30,27 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
   late bool showCurrentInput;
   late bool showTimeInput;
   late bool showCompoundInput;
+
+  Future<Map<String, dynamic>> _fetchElectrolysisData() async {
+    String url = 'http://192.168.0.25:5050/api/v1.0/calculate-electrolysis';
+
+    double mass = double.tryParse(massController.text) ?? 0;
+    double current = double.tryParse(currentController.text) ?? 0;
+    double time = double.tryParse(timeController.text) ?? 0;
+
+    double seconds = _calculateSeconds(time, selectedTimeUnit);
+    double grams = _calculateGrams(mass, selectedMassUnit);
+    Map<String, dynamic> data = {
+      'compound': selectedCompound,
+      'seconds': seconds,
+      'amps': current,
+      'grams': grams,
+    };
+    data.removeWhere((key, value) => value == 0);
+
+    final response = await Dio().post(url, data: data);
+    return response.data;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -213,7 +236,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
                         TableCell(
                           child: Center(
                             child: Text(
-                              'Compound',
+                              'Metal',
                               style: TextStyle(fontSize: 18.0),
                             ),
                           ),
@@ -248,7 +271,7 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
                       children: [
                         TableCell(
                           child: Center(
-                            child: Text(selectedCompound),
+                            child: Text(result['element']),
                           ),
                         ),
                         TableCell(
@@ -287,20 +310,10 @@ class _ElectrolysisPageState extends State<ElectrolysisPage> {
     if ((isTimeFilled && isCurrentFilled) ||
         (isTimeFilled && isMassFilled) ||
         (isCurrentFilled && isMassFilled)) {
-      double mass = double.tryParse(massController.text) ?? 0;
-      double current = double.tryParse(currentController.text) ?? 0;
-      double time = double.tryParse(timeController.text) ?? 0;
-
-      double seconds = _calculateSeconds(time, selectedTimeUnit);
-      double grams = _calculateGrams(mass, selectedMassUnit);
-
-      setState(() {
-        result = {
-          'compound': selectedCompound,
-          'seconds': seconds,
-          'amps': current,
-          'grams': grams,
-        };
+      _fetchElectrolysisData().then((value) {
+        setState(() {
+          result = value;
+        });
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -32,7 +32,6 @@ class _GalvanicCellPageState extends State<GalvanicCellPage> {
       final responseData = response.data as Map<String, dynamic>;
       return responseData['base64'] as String?;
     } catch (error) {
-      print(error.toString());
       return null;
     }
   }

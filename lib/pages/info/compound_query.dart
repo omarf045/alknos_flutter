@@ -29,7 +29,7 @@ class _CompoundQueryPageState extends State<CompoundQueryPage> {
     Map<String, dynamic> data = {'query': query};
     List<dynamic> responseData = [];
 
-    final response = await Dio().get(url, data: data);
+    final response = await Dio().post(url, data: data);
     setState(() {
       responseData = response.data;
     });
